@@ -33,17 +33,17 @@ user consent, no scraping, nothing outside the API License Agreement.
 
 ## What it actually produces, measured
 
-Numbers from the install this was extracted from, on **2026-09-12**, after
-about a week of daily sweeps:
+Numbers from the install this was extracted from, on **2026-09-12** (evening),
+after about a week of daily sweeps:
 
 | | |
 |---|---|
-| listings tracked | **2,729** |
-| distinct queries | **50** |
+| listings tracked | **3,190** |
+| distinct queries | **54** |
 | confirmed **sold** | **14** |
-| of which best-offer (unusable, see below) | **10** |
-| **usable** sold comps | **4** |
-| queries with ≥1 usable comp | **4 / 50 = 8%** |
+| of which best-offer (upper bounds, see below) | **9** |
+| **usable** sold comps | **5** |
+| queries with ≥1 usable comp | **5 / 54 = 9%** |
 
 The switch-off bar in `shadow.py` is **80% coverage** and **within 15% of the
 paid source's median**. So the honest verdict on that install is: *not close*.
@@ -55,7 +55,7 @@ nothing**, and the only way to know which you have is to measure it.
 
 ---
 
-## Three things that will bite you
+## Four things that will bite you
 
 **⚠️ There is no backfill, ever.** Search returns *active* listings only. A sale
 that completed before you started watching is gone. The single highest-value
@@ -63,7 +63,7 @@ thing you can do with this repo is start it today and ignore it for a month.
 
 **⚠️ Best-offer sales are upper bounds, not prices.** eBay never exposes an
 accepted offer — the ended listing still shows its ask. On the data above that
-is **10 of 14 sales**, so excluding them costs you 71% of your comps and
+is **9 of 14 sales**, so excluding them costs you 64% of your comps and
 including them prices against a number nobody paid. They are stored with a flag,
 excluded from `sold_comps()` by default, and returned separately by
 `best_offer_comps()` so a caller can use them as what they are: a **ceiling**.
@@ -71,7 +71,7 @@ excluded from `sold_comps()` by default, and returned separately by
 ⚠️ Read what the flag actually means before deciding. It is set from
 `"BEST_OFFER" in buyingOptions`, which says the *listing accepted offers* — not
 that this sale went through one. On eBay UK that is most used fixed-price
-listings. On the install above it was 10 of the first 14 sales, and the one
+listings. On the install above it was 9 of the first 14 sales, and the one
 product holding both kinds (a Casio FX-CG50: one clean sale at £89.99, three
 best-offer asks at £80.00, £83.90, £88.99) had the excluded asks sitting *below*
 the clean sale. Discarding them was not the conservative choice it looked like.
@@ -86,12 +86,38 @@ was biased upward by construction. A *future* end date now leaves the row open.
 
 ---
 
+**⚠️ One search string finds one slice.** eBay UK holds about twenty live
+listings of any mid-volume used product at once, and a single query does not
+see all of them: the same case is listed as "Argon ONE M.2", "Raspberry Pi Argon
+One With" and "Argon One V2 aluminium", and each phrasing returns a different
+subset. Measured on the install above, adding a second and third phrasing for
+the same product in one sweep:
+
+| product | one phrasing | up to three |
+|---|---|---|
+| Apple Magic Mouse | 210 | **388** |
+| Casio fx-CG50 | 18 | **104** |
+| Xiaomi TV Box S | 36 | **81** |
+| Raspberry Pi Argon ONE | 23 | **23** |
+
+Sweep-wide that was **+640 listings for +100 calls**. The Argon did not move
+because there was nothing more to find — phrasings are a lever on volume, not a
+fix for a niche product, and only the calendar fixes those. Two rules from the
+same run: keep a phrasing to **eight words or fewer** (a long string ANDs every
+word and returns *less*), and cap it at **three per product** so a sweep of
+thirty products stays under a hundred searches. `track` takes each phrasing as
+its own line; `comps` and `compare` match by *title*, so a listing enrolled
+under any phrasing is found from any of them.
+
+---
+
 ## Use
 
 ```bash
 export EBAY_TOKEN="$(your client-credentials token)"
 
 python -m soldshadow track "Casio FX-CG50 graphing calculator"
+python -m soldshadow track "Casio fx-CG50"       # a second phrasing of the same product
 python -m soldshadow track -f queries.txt        # one per line
 
 python -m soldshadow sweep                       # daily, from cron
