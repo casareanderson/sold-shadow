@@ -64,8 +64,18 @@ thing you can do with this repo is start it today and ignore it for a month.
 **⚠️ Best-offer sales are upper bounds, not prices.** eBay never exposes an
 accepted offer — the ended listing still shows its ask. On the data above that
 is **10 of 14 sales**, so excluding them costs you 71% of your comps and
-including them prices against a number nobody paid. They are stored with a flag
-and excluded by default. Pick your poison knowingly.
+including them prices against a number nobody paid. They are stored with a flag,
+excluded from `sold_comps()` by default, and returned separately by
+`best_offer_comps()` so a caller can use them as what they are: a **ceiling**.
+
+⚠️ Read what the flag actually means before deciding. It is set from
+`"BEST_OFFER" in buyingOptions`, which says the *listing accepted offers* — not
+that this sale went through one. On eBay UK that is most used fixed-price
+listings. On the install above it was 10 of the first 14 sales, and the one
+product holding both kinds (a Casio FX-CG50: one clean sale at £89.99, three
+best-offer asks at £80.00, £83.90, £88.99) had the excluded asks sitting *below*
+the clean sale. Discarding them was not the conservative choice it looked like.
+`compare` therefore counts them toward coverage in their own `bound` column.
 
 **⚠️ Auctions carry `itemEndDate` from the moment they are created.** The
 premise "live listings have a null end date" is true for fixed-price only. An

@@ -28,9 +28,18 @@ from dataclasses import dataclass, field
 class Row:
     query: str
     ours: int = 0
+    # ⭐ Sales from listings that accepted offers - upper bounds, priced as a
+    # ceiling since 2.23, and 10 of the first 14 sales the desk recorded.
+    # Counting clean comps alone measured readiness for a pricing path that
+    # no longer exists.
+    bound: int = 0
     theirs: int = 0
     our_median: float | None = None
     their_median: float | None = None
+
+    @property
+    def evidence(self) -> int:
+        return self.ours + self.bound
 
     @property
     def delta_pct(self) -> float | None:
@@ -62,10 +71,14 @@ def compare(store, queries: list[str], trawl_key: str, *,
     for q in [x for x in queries if x][:limit]:
         r = Row(query=q)
         ours = watch_mod.sold_comps(store, q, window_days=window_days)
-        r.ours = len(ours)
-        if ours:
+        bound = watch_mod.best_offer_comps(store, q, window_days=window_days)
+        r.ours, r.bound = len(ours), len(bound)
+        # The median is taken over everything the price would see. A bound is
+        # an upper bound on one sale, so this median leans high by however
+        # much offers were accepted under ask - the "gap" column shows it.
+        if ours or bound:
             r.our_median = round(statistics.median(
-                c.price_gbp for c in ours), 2)
+                c.price_gbp for c in ours + bound), 2)
         try:
             theirs = trawl_mod.cached_sold(q, trawl_key, store)
         except Exception:                                      # noqa: BLE001
@@ -77,7 +90,7 @@ def compare(store, queries: list[str], trawl_key: str, *,
         rows.append(r)
 
     answerable = [r for r in rows if r.theirs]
-    covered = [r for r in answerable if r.ours >= 3]
+    covered = [r for r in answerable if r.evidence >= 3]
     coverage = len(covered) / len(answerable) if answerable else 0.0
     deltas = [abs(r.delta_pct) for r in covered if r.delta_pct is not None]
     worst = max(deltas) if deltas else None
@@ -96,4 +109,3 @@ def compare(store, queries: list[str], trawl_key: str, *,
         v.reason = (f"coverage {coverage:.0%}, worst median gap "
                     f"{(worst or 0):.0f}% - trawl can be switched off")
     return v
-
