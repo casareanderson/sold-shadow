@@ -102,10 +102,10 @@ def main(argv: list[str] | None = None) -> int:
         if not qs:
             sys.exit("nothing to compare: pass queries or -f queries.txt")
         v = shadow_mod.compare(store, qs, key, window_days=args.window_days)
-        print(f"{'ours':>5} {'trawl':>6} {'ourMed':>9} {'theirMed':>9} {'gap':>7}  query")
+        print(f"{'ours':>5} {'bound':>5} {'trawl':>6} {'ourMed':>9} {'theirMed':>9} {'gap':>7}  query")
         for r in v.rows:
             gap = f"{r.delta_pct:+.0f}%" if r.delta_pct is not None else "-"
-            print(f"{r.ours:>5} {r.theirs:>6} {(r.our_median or 0):>9.2f} "
+            print(f"{r.ours:>5} {r.bound:>5} {r.theirs:>6} {(r.our_median or 0):>9.2f} "
                   f"{(r.their_median or 0):>9.2f} {gap:>7}  {r.query[:44]}")
         print(f"\nREADY: {v.ready} - {v.reason}")
         return 0

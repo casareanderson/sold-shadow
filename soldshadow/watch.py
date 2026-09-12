@@ -1,9 +1,9 @@
 """Our own sold comps, recorded rather than rented.
 
-⚠️ EXTRACTED FROM A LARGER APPLICATION. Two functions that read that app's own
-database (`harvest`, `tracked_queries`) were removed rather than generalised:
-what you want tracked is your business, not this module's. Feed `track()` the
-queries you care about - see `__main__.py`.
+⚠️ EXTRACTED FROM A LARGER APPLICATION. The functions that read that app's own
+database to decide WHAT to track (`harvest`, `product_queries`) were removed
+rather than generalised: what you want tracked is your business, not this
+module's. Feed `track()` the queries you care about - see `__main__.py`.
 
 WHY THIS EXISTS. `trawl.py` buys completed sales at 250 requests a month.
 Everything else free gives ASKING prices, and an ask is an opinion. This module
@@ -389,13 +389,25 @@ def sold_comps(store, query: str, *, window_days: int = 60,
     what was accepted, so including them prices against a number nobody paid -
     the exact mistake `from_asking` exists to avoid.
     """
+    return _read_sold(store, query, window_days=window_days,
+                      min_score=min_score,
+                      include_best_offer=include_best_offer)
+
+
+def _read_sold(store, query: str, *, window_days: int, min_score: float,
+               include_best_offer: bool = False,
+               best_offer_only: bool = False) -> list[Comp]:
+    """One query, two callers - so the window, the scoring and the landed-price
+    handling cannot drift apart between them."""
     cutoff = (datetime.now(timezone.utc)
               - timedelta(days=window_days)).isoformat()
     sql = ("SELECT title, price_gbp, postage_gbp, ended_at FROM watchlist"
            " WHERE sold=1 AND ended_at IS NOT NULL AND ended_at >= ?"
            "   AND price_gbp IS NOT NULL")
     args: list = [cutoff]
-    if not include_best_offer:
+    if best_offer_only:
+        sql += " AND best_offer=1"
+    elif not include_best_offer:
         sql += " AND best_offer=0"
     out: list[Comp] = []
     for r in store._c.execute(sql, args):
@@ -411,6 +423,31 @@ def sold_comps(store, query: str, *, window_days: int = 60,
                         title=r["title"] or "",
                         postage_gbp=float(r["postage_gbp"] or 0.0)))
     return out
+
+
+def best_offer_comps(store, query: str, *, window_days: int = 60,
+                     min_score: float = 0.6) -> list[Comp]:
+    """The sales `sold_comps` throws away, for a caller that knows what they are.
+
+    ⚠️⚠️ READ WHAT THE FLAG ACTUALLY MEANS. `best_offer` is set from
+    `"BEST_OFFER" in buyingOptions`, which says THE LISTING ACCEPTED OFFERS -
+    not that this sale went through one. On eBay UK that is most used
+    fixed-price listings, which is why it catches 10 of the first 14 sales this
+    desk recorded. These are not "offer sales"; they are sales whose price
+    MIGHT have been below the ask, and eBay never says which.
+
+    ⇒ Each is an UPPER BOUND on a real completed transaction: weaker than a
+    price, much stronger than a live ask, which never sold at all. Price with
+    them as a ceiling, never as a median.
+
+    ⚠️ Measured 2026-09-12 on the only product then holding both kinds: a clean
+    Casio FX-CG50 sale at £89.99 against best-offer asks of £80.00, £83.90 and
+    £88.99. The excluded asks sat BELOW the clean sale, so discarding them was
+    not the conservative choice it looked like - it turned a genuine four-sale
+    cluster into n=1, and `pricing.py` calls eight comps "strong".
+    """
+    return _read_sold(store, query, window_days=window_days,
+                      min_score=min_score, best_offer_only=True)
 
 
 # Words that say nothing about WHICH product this is. A seller's adjectives are
