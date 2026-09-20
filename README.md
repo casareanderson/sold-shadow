@@ -173,3 +173,14 @@ Python 3.11+. **No dependencies** — stdlib only.
 ## Licence
 
 MIT. Extracted from a private listing tool; issues and pull requests welcome.
+
+---
+
+## The write-up
+
+The wider question this corpus was built to answer — which second-hand price
+sources are real, which are opinions, and what the paid ones actually give you:
+
+**[The Price Data Playbook →](https://asareanderson.gumroad.com/l/jqeejh)** (£19)
+
+More field notes from the same estate: **[dev.to/c1-anderson](https://dev.to/c1-anderson)**
