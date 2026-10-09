@@ -206,3 +206,5 @@ MIT, see [LICENSE](LICENSE). Issues and pull requests are welcome.
 Data comes from the eBay Browse API under your own keyset and the eBay API License Agreement. `compare` reads trawl.dev under your own subscription.
 
 The wider write-up (which second-hand price sources are real, which are opinions, and what the paid ones give you): [The Price Data Playbook](https://asareanderson.gumroad.com/l/jqeejh) (£19). More field notes: [dev.to/c1-anderson](https://dev.to/c1-anderson).
+
+If this is useful to you, [buy me a coffee](https://buymeacoffee.com/iamc_tech) ☕
