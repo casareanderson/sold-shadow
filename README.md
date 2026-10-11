@@ -7,6 +7,7 @@ Build your own eBay sold-comp corpus from the official Browse API, then measure 
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 ![Dependencies: none](https://img.shields.io/badge/dependencies-none-green.svg)
+[![Buy Me a Coffee](https://raw.githubusercontent.com/casareanderson/.github/main/badges/bmc-yellow.svg)](https://buymeacoffee.com/iamc_tech)
 
 eBay's completed-listing search is closed. Everything free gives you *asking* prices, and an ask is an opinion. The paid resellers of sold data are metered (the one this was built against allows 250 requests a month). So this does the slow thing instead: it watches live listings until they end and records the ones that sold. And because "can I stop paying now?" is an empirical question, it ships with the harness that answers it.
 
