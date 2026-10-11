@@ -43,6 +43,8 @@ There is no screenshot of a populated corpus: the install the measurements below
 
 ## Quick start
 
+Full step-by-step guide, tested on a fresh machine every week: [docs/SETUP.md](docs/SETUP.md).
+
 You need Python 3.11 or newer and an eBay developer keyset. There is nothing to install.
 
 ```bash

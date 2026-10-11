@@ -1,0 +1,37 @@
+name: setup-check
+
+# Proves docs/SETUP.md still works from a fresh clone, without eBay or trawl.dev keys.
+# Runs weekly so a Python change shows up here before it shows up for a reader.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 6 * * 1"
+  push:
+    paths:
+      - "docs/SETUP.md"
+      - "scripts/**"
+      - "soldshadow/**"
+      - "tests/**"
+      - ".github/workflows/setup-check.yml"
+  pull_request:
+    paths:
+      - "docs/SETUP.md"
+      - "scripts/**"
+      - "soldshadow/**"
+      - "tests/**"
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: bash scripts/setup-check.sh
